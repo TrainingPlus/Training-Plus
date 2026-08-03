@@ -1,14 +1,15 @@
 // ==========================================
 // 1. FIREBASE CONFIGURATION
 // ==========================================
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyCzTs_zw28wkHij4Jj9-EEW3XOpQ5si2yc",
-    authDomain: "training-plus-212a2.firebaseapp.com",
-    projectId: "training-plus-212a2",
-    storageBucket: "training-plus-212a2.firebasestorage.app",
-    messagingSenderId: "330136803727",
-    appId: "1:330136803727:web:3013a358a547a112ff93fa",
-    measurementId: "G-FX3XRSLD8W"
+  apiKey: "AIzaSyCzTs_zw28wkHij4Jj9-EEW3XOpQ5si2yc",
+  authDomain: "training-plus-212a2.firebaseapp.com",
+  projectId: "training-plus-212a2",
+  storageBucket: "training-plus-212a2.firebasestorage.app",
+  messagingSenderId: "330136803727",
+  appId: "1:330136803727:web:3013a358a547a112ff93fa",
+  measurementId: "G-FX3XRSLD8W"
 };
 
 if (!firebase.apps.length) {
