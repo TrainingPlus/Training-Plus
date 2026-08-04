@@ -623,6 +623,9 @@ function listenToGroupChat() {
           const currentUserId = currentUserData ? currentUserData.uid : null;
           const currentName = currentUserData ? (currentUserData.displayName || currentUserData.email?.split('@')[0]) : null;
 
+          let unreadCount = 0;
+          const isChatHidden = document.getElementById('chat-window')?.classList.contains('hidden');
+
           snapshot.forEach(doc => {
               const m = doc.data();
               const div = document.createElement('div');
@@ -632,6 +635,11 @@ function listenToGroupChat() {
               
               // Check if message belongs to active user
               const isMe = (m.uid && m.uid === currentUserId) || (senderName === currentName);
+
+              // Count unread messages when chat window is closed
+              if (isChatHidden && !isMe) {
+                  unreadCount++;
+              }
               
               div.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
               
@@ -670,6 +678,17 @@ function listenToGroupChat() {
               `;
               box.appendChild(div);
           });
+
+          // Update the unread badge element
+          const badgeEl = document.getElementById('chat-unread-badge');
+          if (badgeEl) {
+              if (unreadCount > 0) {
+                  badgeEl.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                  badgeEl.classList.remove('hidden');
+              } else {
+                  badgeEl.classList.add('hidden');
+              }
+          }
 
           box.scrollTop = box.scrollHeight;
       }, (error) => {
@@ -743,6 +762,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
 // ==========================================
 // 9. NAVIGATION, MODALS & LIVE CLOCK
 // ==========================================
@@ -753,7 +773,22 @@ function showView(id) {
 
 function openAccountModal() { document.getElementById('account-modal').classList.remove('hidden'); }
 function closeAccountModal() { document.getElementById('account-modal').classList.add('hidden'); }
-function toggleChatWindow() { document.getElementById('chat-window').classList.toggle('hidden'); }
+
+function toggleChatWindow() { 
+    const chatWin = document.getElementById('chat-window');
+    if (!chatWin) return;
+
+    chatWin.classList.toggle('hidden');
+
+    // Clear unread badge when opening chat window
+    if (!chatWin.classList.contains('hidden')) {
+        const badgeEl = document.getElementById('chat-unread-badge');
+        if (badgeEl) {
+            badgeEl.innerText = '0';
+            badgeEl.classList.add('hidden');
+        }
+    }
+}
 
 function runLiveFooterClock() {
     const el = document.getElementById('live-footer-datetime');
