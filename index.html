@@ -113,22 +113,28 @@
         </div>
     </div>
 
-   <!-- Floating Group Chat -->
+   <!-- Group Chat Floating Widget -->
 <div id="chat-widget">
     <button id="chat-toggle-btn" class="chat-fab" onclick="toggleChatWindow()">💬</button>
+    
     <div id="chat-window" class="chat-box hidden">
         <div class="chat-header">
             <span data-i18n="chat_header">Team Group Chat</span>
             <span style="cursor:pointer;" onclick="toggleChatWindow()">&times;</span>
         </div>
+        
         <div id="chat-messages" class="chat-messages"></div>
-        <!-- Emoji Picker Popup -->
+
+        <!-- Emoji Picker Popup Container -->
         <div id="emoji-picker" class="emoji-picker-container hidden">
             <span>😀</span><span>😂</span><span>😍</span><span>👍</span><span>❤️</span>
             <span>🔥</span><span>🎉</span><span>👏</span><span>🙏</span><span>✨</span>
             <span>😊</span><span>😎</span><span>🙌</span><span>💯</span><span>🚀</span>
         </div>
+
+        <!-- Chat Input Row -->
         <div class="chat-input-row">
+            <button type="button" class="emoji-toggle-btn" onclick="toggleEmojiPicker()">😊</button>
             <input type="text" id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
             <button type="button" class="primary-btn" data-i18n="btn_send" onclick="sendChatMessage()">Send</button>
         </div>
