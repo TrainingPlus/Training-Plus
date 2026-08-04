@@ -224,16 +224,75 @@ body {
     color: white; border: none; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 .chat-box {
-    width: 280px; height: 350px; background: white; border-radius: 12px;
+    width: 310px; height: 400px; background: white; border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 1px solid var(--border-color);
     display: flex; flex-direction: column; overflow: hidden; position: absolute; bottom: 60px; right: 0;
 }
-.chat-header { background: var(--accent-slate-blue); color: white; padding: 10px; font-weight: 600; display: flex; justify-content: space-between; }
-.chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.82rem; display: flex; flex-direction: column; gap: 6px; }
-.chat-msg { background: #f0f4f2; padding: 6px 10px; border-radius: 8px; }
-.chat-input-row { display: flex; padding: 8px; border-top: 1px solid var(--border-color); }
-.chat-input-row input { flex: 1; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem; }
-.chat-input-row button { background: var(--accent-mint); border: none; padding: 6px 10px; margin-left: 4px; border-radius: 4px; cursor: pointer; }
+.chat-header { background: var(--accent-slate-blue); color: white; padding: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+
+/* Chat Message Bubbles Layout */
+.chat-messages {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #fafbfc;
+}
+
+.chat-msg {
+    max-width: 82%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Current user messages (Right aligned blue bubble) */
+.chat-msg.my-msg {
+    align-self: flex-end;
+    background-color: var(--accent-slate-blue);
+    color: #ffffff;
+    border-bottom-right-radius: 2px;
+    text-align: left;
+}
+
+/* Other users' messages (Left aligned light gray bubble) */
+.chat-msg.other-msg {
+    align-self: flex-start;
+    background-color: #edf2f7;
+    color: var(--text-primary);
+    border-bottom-left-radius: 2px;
+    text-align: left;
+}
+
+.msg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+    opacity: 0.9;
+}
+
+.chat-msg.my-msg .msg-time {
+    color: #e2e8f0;
+}
+
+.chat-msg.other-msg .msg-time {
+    color: var(--text-muted);
+}
+
+.msg-body {
+    word-break: break-word;
+}
+
+.chat-input-row { display: flex; padding: 10px; border-top: 1px solid var(--border-color); background: #ffffff; gap: 6px; }
+.chat-input-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; }
+.chat-input-row button { margin-left: 0; }
 
 /* Bottom Medial Footer */
 .bottom-footer {
