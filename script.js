@@ -720,6 +720,30 @@ function escapeHTML(str) {
     );
 }
 
+// Toggle Emoji Picker Popup
+function toggleEmojiPicker() {
+    const picker = document.getElementById('emoji-picker');
+    if (picker) {
+        picker.classList.toggle('hidden');
+    }
+}
+
+// Attach Event Listeners to Insert Emojis into Input Field
+window.addEventListener('DOMContentLoaded', () => {
+    const emojiPicker = document.getElementById('emoji-picker');
+    const chatInput = document.getElementById('chat-input');
+
+    if (emojiPicker && chatInput) {
+        emojiPicker.querySelectorAll('span').forEach(emoji => {
+            emoji.addEventListener('click', () => {
+                chatInput.value += emoji.innerText;
+                chatInput.focus();
+                emojiPicker.classList.add('hidden'); // Close picker after selecting
+            });
+        });
+    }
+});
+
 // ==========================================
 // 9. NAVIGATION, MODALS & LIVE CLOCK
 // ==========================================
