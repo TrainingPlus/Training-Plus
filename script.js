@@ -630,12 +630,12 @@ function listenToGroupChat() {
               const senderName = m.username || "Anonymous";
               const textContent = m.message || "";
               
-              // Check if message belongs to current user (supports both new uid & old username matching)
+              // Check if message belongs to current user
               const isMe = (m.uid && m.uid === currentUserId) || (senderName === currentName);
               
               div.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
               
-              // Format timestamp (or fallback if pending serverTimestamp)
+              // Format timestamp
               let timeStr = "";
               if (m.timestamp && typeof m.timestamp.toDate === 'function') {
                   timeStr = m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -657,6 +657,49 @@ function listenToGroupChat() {
       }, (error) => {
           console.error("Chat permission error:", error);
       });
+}
+
+// Function to send group chat messages
+async function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    if (!input) return;
+
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Fallback to Firebase auth if currentUserData isn't loaded yet
+    const user = currentUserData || auth.currentUser;
+    if (!user) {
+        alert("Please sign in to send messages.");
+        return;
+    }
+
+    try {
+        const displayName = user.displayName 
+            || (user.email ? user.email.split('@')[0] : "User");
+
+        // Clear input field immediately for clean UI
+        input.value = "";
+
+        // Send payload to Firestore
+        await db.collection('chat_messages').add({
+            uid: user.uid,
+            username: displayName,
+            message: message,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (err) {
+        console.error("Failed to send message:", err);
+        alert("Failed to send message: " + err.message);
+    }
+}
+
+// Helper function to escape special HTML characters for security
+function escapeHTML(str) {
+    if (!str) return "";
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
 }
 
 // ==========================================
