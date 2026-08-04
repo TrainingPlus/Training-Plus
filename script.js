@@ -691,7 +691,7 @@ async function sendChatMessage() {
         alert("Please sign in to send messages.");
         return;
     }
-
+    
     try {
         const displayName = user.displayName 
             || (user.email ? user.email.split('@')[0] : "User");
