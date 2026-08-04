@@ -302,3 +302,45 @@ body {
 }
 
 body[dir="rtl"] { direction: rtl; text-align: right; }
+
+/* Emoji Picker Styles */
+.emoji-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    transition: transform 0.1s ease;
+}
+
+.emoji-toggle-btn:hover {
+    transform: scale(1.15);
+}
+
+.emoji-picker-container {
+    position: absolute;
+    bottom: 52px;
+    left: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1050;
+}
+
+.emoji-picker-container span {
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 4px;
+    padding: 2px;
+    transition: background 0.15s;
+}
+
+.emoji-picker-container span:hover {
+    background-color: #edf2f7;
+}
