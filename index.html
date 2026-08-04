@@ -67,10 +67,24 @@
             <h2 data-i18n="register_cpr">Register New CPR</h2>
             <p class="subtitle" data-i18n="register_cpr_subtitle">Enter a 9-digit CPR number to add a student.</p>
             <form id="cpr-form" class="standard-form" onsubmit="addStudentCPR(); return false;">
+                <!-- 1. CPR Number -->
                 <label>
                     <span data-i18n="cpr_label">CPR Number (9 Digits):</span>
                     <input type="text" id="cpr-input" maxlength="9" required placeholder="e.g. 980123456">
                 </label>
+                
+                <!-- 2. Student Number  -->
+                <label>
+                    <span data-i18n="student_number_label">Student Number:</span>
+                    <input type="text" id="student-number-input" required placeholder="e.g. 202301234">
+                </label>
+
+                <!-- 3. Student Major  -->
+                <label>
+                    <span data-i18n="student_major_label">Student Major:</span>
+                    <input type="text" id="student-major-input" required placeholder="e.g. Computer Science">
+                </label>
+                
                 <div class="button-group">
                     <button type="submit" class="primary-btn" id="add-student-btn" data-i18n="btn_submit">Submit Record</button>
                     <button type="button" class="secondary-btn" data-i18n="btn_back" onclick="showView('view-home')">Done / Back</button>
