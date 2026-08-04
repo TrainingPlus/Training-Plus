@@ -69,7 +69,9 @@ const translations = {
         btn_add_course: "+ Add Course",
         btn_delete_course: "Delete Course",
         lbl_no_courses: "No courses added yet.",
-        lbl_no_students: "No student records found."
+        lbl_no_students: "No student records found.",
+        lbl_student_number: "Student Number:",
+        lbl_major: "Major:"
     },
     ar: {
         search_placeholder: "البحث بالاسم أو الرقم الشخصي...",
@@ -114,7 +116,9 @@ const translations = {
         btn_add_course: "+ إضافة دورة",
         btn_delete_course: "حذف الدورة",
         lbl_no_courses: "لم يتم إضافة دورات بعد.",
-        lbl_no_students: "لم يتم العثور على سجلات للطلاب."
+        lbl_no_students: "لم يتم العثور على سجلات للطلاب.", 
+        lbl_student_number: "الرقم الجامعي:",
+        lbl_major: "التخصص:"
     }
 };
 
@@ -199,6 +203,9 @@ function logoutUser() {
 // ==========================================
 async function addStudentCPR() {
     const cpr = document.getElementById('cpr-input').value.trim();
+    const studentNumber = document.getElementById('student-number-input')?.value.trim() || '';
+    const studentMajor = document.getElementById('student-major-input')?.value.trim() || '';
+
     if (cpr.length !== 9 || isNaN(cpr)) {
         alert("CPR must be exactly 9 numbers.");
         return;
@@ -216,6 +223,8 @@ async function addStudentCPR() {
 
         await db.collection('students').add({
             cpr: cpr,
+            studentNumber: studentNumber,
+            major: studentMajor,
             name: "New Student",
             gender: "male",
             email: "",
@@ -226,7 +235,7 @@ async function addStudentCPR() {
         document.getElementById('cpr-form').reset();
         showView('view-cpr-success');
     } catch (err) {
-        alert("Error adding CPR: " + err.message);
+        alert("Error adding student: " + err.message);
     }
 }
 
@@ -263,7 +272,9 @@ function handleSearch() {
     const q = document.getElementById('search-input').value.toLowerCase().trim();
     const filtered = studentList.filter(s => 
         (s.name && s.name.toLowerCase().includes(q)) || 
-        (s.cpr && s.cpr.includes(q))
+        (s.cpr && s.cpr.includes(q)) ||
+        (s.studentNumber && s.studentNumber.toLowerCase().includes(q)) ||
+        (s.major && s.major.toLowerCase().includes(q))
     );
     renderStudentDirectory(filtered);
 }
@@ -284,6 +295,8 @@ function downloadAllStudentsData() {
         const courseNames = Array.isArray(s.courses) ? s.courses.map(c => c.name).join(', ') : 'None';
         return {
             "Full Name": s.name || '',
+            "Student Number": s.studentNumber || '',
+            "Major": s.major || '',
             "CPR": s.cpr || '',
             "Gender": s.gender || '',
             "Email": s.email || '',
@@ -335,6 +348,8 @@ function downloadSingleStudentData(studentId) {
     const recordRows = [
         ["STUDENT RECORD INFORMATION", ""],
         ["Full Name", student.name || 'N/A'],
+        ["Student Number", student.studentNumber || 'N/A'],
+        ["Major", student.major || 'N/A'],
         ["CPR", student.cpr || 'N/A'],
         ["Gender", student.gender || 'N/A'],
         ["Email", student.email || 'N/A'],
@@ -425,6 +440,12 @@ function renderStudentDirectory(list) {
                 <div class="grid-form">
                     <label>${t.lbl_full_name} 
                         <input type="text" value="${student.name || ''}" onchange="updateStudentField('${student.id}', 'name', this.value)">
+                    </label>
+                    <label>${t.lbl_student_number || 'Student Number:'} 
+                        <input type="text" value="${student.studentNumber || ''}" onchange="updateStudentField('${student.id}', 'studentNumber', this.value)">
+                    </label>
+                    <label>${t.lbl_major || 'Major:'} 
+                        <input type="text" value="${student.major || ''}" onchange="updateStudentField('${student.id}', 'major', this.value)">
                     </label>
                     <label>${t.lbl_cpr} 
                         <input type="text" value="${student.cpr}" readonly>
