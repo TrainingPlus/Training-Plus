@@ -18,6 +18,7 @@
     font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+
 body {
     background-color: var(--bg-color);
     color: var(--text-primary);
