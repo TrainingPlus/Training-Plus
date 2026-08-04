@@ -608,7 +608,7 @@ async function deleteStudentCV(studentId) {
 }
 
 // ==========================================
-// 8. REAL-TIME GROUP CHAT
+// 8. REAL-TIME GROUP CHAT (UPDATED)
 // ==========================================
 function listenToGroupChat() {
     db.collection('chat_messages')
@@ -620,15 +620,33 @@ function listenToGroupChat() {
 
           box.innerHTML = "";
 
+          const currentUserId = currentUserData ? currentUserData.uid : null;
+
           snapshot.forEach(doc => {
               const m = doc.data();
               const div = document.createElement('div');
-              div.className = "chat-msg";
+              
+              const isMe = m.uid === currentUserId;
+              div.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
               
               const senderName = m.username || "Anonymous";
               const textContent = m.message || "";
+              
+              // Format Firestore timestamp or fallback to current time
+              let timeStr = "";
+              if (m.timestamp && typeof m.timestamp.toDate === 'function') {
+                  timeStr = m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              } else {
+                  timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              }
 
-              div.innerHTML = `<strong>${escapeHTML(senderName)}:</strong> ${escapeHTML(textContent)}`;
+              div.innerHTML = `
+                  <div class="msg-header">
+                      <strong class="msg-sender">${escapeHTML(senderName)}</strong>
+                      <span class="msg-time">${timeStr}</span>
+                  </div>
+                  <div class="msg-body">${escapeHTML(textContent)}</div>
+              `;
               box.appendChild(div);
           });
 
@@ -652,6 +670,7 @@ async function sendChatMessage() {
         input.value = "";
 
         await db.collection('chat_messages').add({
+            uid: currentUserData.uid,
             username: displayName,
             message: message,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
