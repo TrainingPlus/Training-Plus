@@ -608,7 +608,7 @@ async function deleteStudentCV(studentId) {
 }
 
 // ==========================================
-// 8. REAL-TIME GROUP CHAT (UPDATED)
+// 8. REAL-TIME GROUP CHAT & EMOJI PICKER
 // ==========================================
 function listenToGroupChat() {
     db.collection('chat_messages')
@@ -630,37 +630,37 @@ function listenToGroupChat() {
               const senderName = m.username || "Anonymous";
               const textContent = m.message || "";
               
-              // Check if message belongs to current user
+              // Check if message belongs to active user
               const isMe = (m.uid && m.uid === currentUserId) || (senderName === currentName);
               
               div.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
               
-              // Format timestamp (Today: 10:30 AM | Yesterday: Yesterday 10:30 AM | Older: Aug 3, 10:30 AM)
-let timeStr = "";
-if (m.timestamp && typeof m.timestamp.toDate === 'function') {
-    const msgDate = m.timestamp.toDate();
-    const now = new Date();
-    
-    // Check if yesterday
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    
-    const isToday = msgDate.toDateString() === now.toDateString();
-    const isYesterday = msgDate.toDateString() === yesterday.toDateString();
-    
-    const timeOnly = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              // Smart Date & Time Formatting
+              let timeStr = "";
+              if (m.timestamp && typeof m.timestamp.toDate === 'function') {
+                  const msgDate = m.timestamp.toDate();
+                  const now = new Date();
+                  
+                  const yesterday = new Date(now);
+                  yesterday.setDate(now.getDate() - 1);
+                  
+                  const isToday = msgDate.toDateString() === now.toDateString();
+                  const isYesterday = msgDate.toDateString() === yesterday.toDateString();
+                  
+                  const timeOnly = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    if (isToday) {
-        timeStr = timeOnly;
-    } else if (isYesterday) {
-        timeStr = `Yesterday ${timeOnly}`;
-    } else {
-        const dateOnly = msgDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        timeStr = `${dateOnly}, ${timeOnly}`;
-    }
-} else {
-    timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+                  if (isToday) {
+                      timeStr = timeOnly;
+                  } else if (isYesterday) {
+                      timeStr = `Yesterday ${timeOnly}`;
+                  } else {
+                      const dateOnly = msgDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                      timeStr = `${dateOnly}, ${timeOnly}`;
+                  }
+              } else {
+                  timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              }
+
               div.innerHTML = `
                   <div class="msg-header">
                       <strong class="msg-sender">${escapeHTML(senderName)}</strong>
@@ -677,7 +677,7 @@ if (m.timestamp && typeof m.timestamp.toDate === 'function') {
       });
 }
 
-// Function to send group chat messages
+// Send Message Function
 async function sendChatMessage() {
     const input = document.getElementById('chat-input');
     if (!input) return;
@@ -685,21 +685,21 @@ async function sendChatMessage() {
     const message = input.value.trim();
     if (!message) return;
 
-    // Fallback to Firebase auth if currentUserData isn't loaded yet
     const user = currentUserData || auth.currentUser;
     if (!user) {
         alert("Please sign in to send messages.");
         return;
     }
-    
+
     try {
         const displayName = user.displayName 
             || (user.email ? user.email.split('@')[0] : "User");
 
-        // Clear input field immediately for clean UI
         input.value = "";
+        
+        // Hide emoji picker if open
+        document.getElementById('emoji-picker')?.classList.add('hidden');
 
-        // Send payload to Firestore
         await db.collection('chat_messages').add({
             uid: user.uid,
             username: displayName,
@@ -712,14 +712,6 @@ async function sendChatMessage() {
     }
 }
 
-// Helper function to escape special HTML characters for security
-function escapeHTML(str) {
-    if (!str) return "";
-    return str.replace(/[&<>'"]/g, 
-        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-    );
-}
-
 // Toggle Emoji Picker Popup
 function toggleEmojiPicker() {
     const picker = document.getElementById('emoji-picker');
@@ -728,7 +720,15 @@ function toggleEmojiPicker() {
     }
 }
 
-// Attach Event Listeners to Insert Emojis into Input Field
+// Escape HTML for XSS prevention
+function escapeHTML(str) {
+    if (!str) return "";
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
+// Initialize Emoji Click Listeners on DOM Load
 window.addEventListener('DOMContentLoaded', () => {
     const emojiPicker = document.getElementById('emoji-picker');
     const chatInput = document.getElementById('chat-input');
@@ -738,12 +738,11 @@ window.addEventListener('DOMContentLoaded', () => {
             emoji.addEventListener('click', () => {
                 chatInput.value += emoji.innerText;
                 chatInput.focus();
-                emojiPicker.classList.add('hidden'); // Close picker after selecting
+                emojiPicker.classList.add('hidden');
             });
         });
     }
 });
-
 // ==========================================
 // 9. NAVIGATION, MODALS & LIVE CLOCK
 // ==========================================
