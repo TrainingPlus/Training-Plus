@@ -635,14 +635,32 @@ function listenToGroupChat() {
               
               div.className = `chat-msg ${isMe ? 'my-msg' : 'other-msg'}`;
               
-              // Format timestamp
-              let timeStr = "";
-              if (m.timestamp && typeof m.timestamp.toDate === 'function') {
-                  timeStr = m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              } else {
-                  timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              }
+              // Format timestamp (Today: 10:30 AM | Yesterday: Yesterday 10:30 AM | Older: Aug 3, 10:30 AM)
+let timeStr = "";
+if (m.timestamp && typeof m.timestamp.toDate === 'function') {
+    const msgDate = m.timestamp.toDate();
+    const now = new Date();
+    
+    // Check if yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    
+    const isToday = msgDate.toDateString() === now.toDateString();
+    const isYesterday = msgDate.toDateString() === yesterday.toDateString();
+    
+    const timeOnly = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    if (isToday) {
+        timeStr = timeOnly;
+    } else if (isYesterday) {
+        timeStr = `Yesterday ${timeOnly}`;
+    } else {
+        const dateOnly = msgDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        timeStr = `${dateOnly}, ${timeOnly}`;
+    }
+} else {
+    timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
               div.innerHTML = `
                   <div class="msg-header">
                       <strong class="msg-sender">${escapeHTML(senderName)}</strong>
