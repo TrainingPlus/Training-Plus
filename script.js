@@ -21,6 +21,9 @@ let currentUserData = null;
 let studentList = [];
 let currentLang = 'en';
 
+// Track initial page load time to prevent old unread badge alerts
+const pageLoadedAt = new Date();
+
 // ==========================================
 // 2. LANGUAGE TRANSLATIONS (ENGLISH / ARABIC)
 // ==========================================
@@ -277,6 +280,7 @@ function handleSearch() {
     );
     renderStudentDirectory(filtered);
 }
+
 // EXCEL EXPORTS
 function downloadAllStudentsData() {
     if (studentList.length === 0) {
@@ -374,6 +378,7 @@ function downloadSingleStudentData(studentId) {
 
 function renderStudentDirectory(list) {
     const container = document.getElementById('student-container');
+    if (!container) return;
     container.innerHTML = "";
 
     const t = translations[currentLang];
@@ -393,7 +398,7 @@ function renderStudentDirectory(list) {
             coursesHTML = student.courses.map((c, index) => `
                 <li style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border: 1px solid #e2e8f0; border-radius:6px; margin-bottom:6px; font-size:0.88rem;">
                     <div>
-                        <strong style="color: #2d3748;">${c.name}</strong> 
+                        <strong style="color: #2d3748;">${escapeHTML(c.name)}</strong> 
                         <span style="color:#718096; margin-left:8px; font-size:0.80rem;">(${c.addedAt})</span>
                     </div>
                     <button type="button" onclick="removeCourse('${student.id}', ${index})" 
@@ -426,7 +431,7 @@ function renderStudentDirectory(list) {
         // Render Student Card
         item.innerHTML = `
             <div class="student-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                <span>${student.name} (${student.cpr})</span>
+                <span>${escapeHTML(student.name)} (${escapeHTML(student.cpr)})</span>
                 <svg class="arrow-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
             <div class="student-details hidden">
@@ -437,16 +442,16 @@ function renderStudentDirectory(list) {
                 
                 <div class="grid-form">
                     <label>${t.lbl_full_name} 
-                        <input type="text" value="${student.name || ''}" onchange="updateStudentField('${student.id}', 'name', this.value)">
+                        <input type="text" value="${escapeHTML(student.name || '')}" onchange="updateStudentField('${student.id}', 'name', this.value)">
                     </label>
                     <label>${t.lbl_student_number || 'Student Number:'} 
-                        <input type="text" value="${student.studentNumber || ''}" onchange="updateStudentField('${student.id}', 'studentNumber', this.value)">
+                        <input type="text" value="${escapeHTML(student.studentNumber || '')}" onchange="updateStudentField('${student.id}', 'studentNumber', this.value)">
                     </label>
                     <label>${t.lbl_major || 'Major:'} 
-                        <input type="text" value="${student.major || ''}" onchange="updateStudentField('${student.id}', 'major', this.value)">
+                        <input type="text" value="${escapeHTML(student.major || '')}" onchange="updateStudentField('${student.id}', 'major', this.value)">
                     </label>
                     <label>${t.lbl_cpr} 
-                        <input type="text" value="${student.cpr}" readonly>
+                        <input type="text" value="${escapeHTML(student.cpr)}" readonly>
                     </label>
                     <label>${t.lbl_gender} 
                         <select onchange="updateStudentField('${student.id}', 'gender', this.value)">
@@ -455,7 +460,7 @@ function renderStudentDirectory(list) {
                         </select>
                     </label>
                     <label>${t.lbl_email} 
-                        <input type="email" value="${student.email || ''}" onchange="updateStudentField('${student.id}', 'email', this.value)">
+                        <input type="email" value="${escapeHTML(student.email || '')}" onchange="updateStudentField('${student.id}', 'email', this.value)">
                     </label>
                 </div>
 
@@ -626,6 +631,10 @@ function listenToGroupChat() {
           let unreadCount = 0;
           const isChatHidden = document.getElementById('chat-window')?.classList.contains('hidden');
 
+          // Read last opened timestamp from localStorage, default to page load time
+          const savedLastRead = localStorage.getItem('lastReadChatTime');
+          const lastReadTime = savedLastRead ? new Date(savedLastRead) : pageLoadedAt;
+
           snapshot.forEach(doc => {
               const m = doc.data();
               const div = document.createElement('div');
@@ -636,8 +645,13 @@ function listenToGroupChat() {
               // Check if message belongs to active user
               const isMe = (m.uid && m.uid === currentUserId) || (senderName === currentName);
 
-              // Count unread messages when chat window is closed
-              if (isChatHidden && !isMe) {
+              // Convert Firestore timestamp to JS Date safely
+              const msgDate = m.timestamp && typeof m.timestamp.toDate === 'function' 
+                  ? m.timestamp.toDate() 
+                  : new Date();
+
+              // ONLY count as unread if chat window is closed, not sent by me, and newer than last read time
+              if (isChatHidden && !isMe && msgDate > lastReadTime) {
                   unreadCount++;
               }
               
@@ -646,9 +660,7 @@ function listenToGroupChat() {
               // Smart Date & Time Formatting
               let timeStr = "";
               if (m.timestamp && typeof m.timestamp.toDate === 'function') {
-                  const msgDate = m.timestamp.toDate();
                   const now = new Date();
-                  
                   const yesterday = new Date(now);
                   yesterday.setDate(now.getDate() - 1);
                   
@@ -780,8 +792,10 @@ function toggleChatWindow() {
 
     chatWin.classList.toggle('hidden');
 
-    // Clear unread badge when opening chat window
+    // Clear unread badge & update last read time when opening chat window
     if (!chatWin.classList.contains('hidden')) {
+        localStorage.setItem('lastReadChatTime', new Date().toISOString());
+
         const badgeEl = document.getElementById('chat-unread-badge');
         if (badgeEl) {
             badgeEl.innerText = '0';
