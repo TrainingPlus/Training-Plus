@@ -115,7 +115,11 @@
 
    <!-- Group Chat Floating Widget -->
 <div id="chat-widget">
-    <button id="chat-toggle-btn" class="chat-fab" onclick="toggleChatWindow()">💬</button>
+    <div id="chat-widget">
+    <button id="chat-toggle-btn" class="chat-fab" onclick="toggleChatWindow()">
+        💬
+        <span id="chat-unread-badge" class="unread-badge hidden">0</span>
+    </button>
     
     <div id="chat-window" class="chat-box hidden">
         <div class="chat-header">
