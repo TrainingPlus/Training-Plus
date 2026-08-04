@@ -219,9 +219,41 @@ body {
 
 /* Group Chat Floating Widget */
 #chat-widget { position: fixed; bottom: 50px; right: 20px; z-index: 1000; }
+
+/* 1. Updated FAB button styling with relative positioning */
 .chat-fab {
-    width: 50px; height: 50px; border-radius: 50%; background: var(--accent-slate-blue);
-    color: white; border: none; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    position: relative; /* Added to anchor the top-right badge */
+    width: 50px; 
+    height: 50px; 
+    border-radius: 50%; 
+    background: var(--accent-slate-blue);
+    color: white; 
+    border: none; 
+    font-size: 1.4rem; 
+    cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* 2. NEW Badge CSS added right below .chat-fab */
+#chat-unread-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: var(--danger-red, #e53e3e);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: bold;
+    line-height: 1;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9999px;
+    border: 2px solid var(--card-bg, #ffffff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
 }
 .chat-box {
     width: 310px; height: 400px; background: white; border-radius: 12px;
