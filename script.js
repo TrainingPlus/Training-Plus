@@ -209,7 +209,7 @@ async function addStudentCPR() {
 
     const cpr = cprInput.value.trim();
 
-    // Validate 9-digit CPR format
+    // 1. Validate 9-digit CPR format
     if (!/^\d{9}$/.test(cpr)) {
         const errorMsg = (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang].alert_cpr_length) 
             ? translations[currentLang].alert_cpr_length 
@@ -225,18 +225,19 @@ async function addStudentCPR() {
             return;
         }
 
+        // Generate current user's display name or email prefix
+        const accountUsername = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : "User");
         const currentUid = currentUser.uid;
         const currentEmail = currentUser.email;
-        const currentName = currentUser.displayName || currentUser.email;
 
         const docRef = db.collection("students").doc(cpr);
         const docSnap = await docRef.get();
 
-        // Check if CPR already exists
+        // 2. Check if CPR already exists
         if (docSnap.exists) {
             const existingData = docSnap.data();
             
-            const creatorUid = existingData.createdByUid || existingData.added_by;
+            const creatorUid = existingData.createdByUid;
             const creatorEmail = existingData.createdByEmail || existingData.added_by;
 
             // Check if added by current user
@@ -246,20 +247,23 @@ async function addStudentCPR() {
             if (isMyRecord) {
                 alert(`This CPR (${cpr}) is already registered in your directory.`);
             } else {
-                // Get creator username matching Account Modal style
+                // Extract username from all possible fields (createdByName, createdByEmail, or added_by)
                 let creatorName = existingData.createdByName;
-                if (!creatorName && existingData.createdByEmail) {
-                    creatorName = existingData.createdByEmail.split('@')[0];
-                } else if (!creatorName && existingData.added_by) {
-                    creatorName = existingData.added_by.includes('@') ? existingData.added_by.split('@')[0] : existingData.added_by;
+                
+                if (!creatorName || creatorName === "Unknown") {
+                    if (existingData.createdByEmail) {
+                        creatorName = existingData.createdByEmail.split('@')[0];
+                    } else if (existingData.added_by) {
+                        creatorName = existingData.added_by.includes('@') ? existingData.added_by.split('@')[0] : existingData.added_by;
+                    }
                 }
 
-                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName || "Unknown User"}).`);
+                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName || accountUsername}).`);
             }
             return; // Stop submission
         }
 
-        // Save new record with consistent ownership fields
+        // 3. Save new record storing the exact account username
         await docRef.set({
             cpr: cpr,
             studentNumber: cpr,
@@ -268,8 +272,8 @@ async function addStudentCPR() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdByUid: currentUid,
             createdByEmail: currentEmail,
-            createdByName: currentName,
-            added_by: currentEmail // Ensures compatibility with directory listener
+            createdByName: accountUsername,
+            added_by: currentEmail
         });
 
         // Clear input field
