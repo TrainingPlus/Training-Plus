@@ -219,23 +219,42 @@ async function addStudentCPR() {
     }
 
     try {
-        // Save using CPR as unique key while preserving database schema fields
-        await db.collection("students").doc(cpr).set({
+        const docRef = db.collection("students").doc(cpr);
+        const docSnap = await docRef.get();
+
+        // Check if the CPR already exists in the database
+        if (docSnap.exists) {
+            const existingData = docSnap.data();
+            const addedBy = existingData.createdByEmail || existingData.createdByName || "another user";
+            
+            alert(`This CPR (${cpr}) has already been registered in the system (Added by: ${addedBy}).`);
+            return; // Stop submission
+        }
+
+        // Get current authenticated user details
+        const currentUser = firebase.auth().currentUser;
+
+        // Save new record with author details
+        await docRef.set({
             cpr: cpr,
-            studentNumber: cpr, // Sets student number equal to CPR
+            studentNumber: cpr,
             major: "N/A",
             phone: "N/A",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdByUid: currentUser ? currentUser.uid : "unknown",
+            createdByEmail: currentUser ? currentUser.email : "unknown",
+            createdByName: currentUser ? (currentUser.displayName || currentUser.email) : "unknown"
+        });
 
         // Clear input field
         cprInput.value = '';
 
         // Navigate to success view
         showView('view-cpr-success');
+
     } catch (error) {
-        console.error("Error saving student record:", error);
-        alert("Failed to save record: " + error.message);
+        console.error("Error checking or saving student record:", error);
+        alert("Failed to process request: " + error.message);
     }
 }
 function resetAndAddAnotherCPR() {
