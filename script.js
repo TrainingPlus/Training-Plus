@@ -220,38 +220,44 @@ async function addStudentCPR() {
 
     try {
         const docRef = db.collection("students").doc(cpr);
-        
-        // 2. Query Firestore to check if CPR already exists
         const docSnap = await docRef.get();
 
+        const currentUser = firebase.auth().currentUser;
+        const currentUid = currentUser ? currentUser.uid : null;
+
+        // 2. Check if CPR already exists
         if (docSnap.exists) {
             const existingData = docSnap.data();
-            const addedBy = existingData.createdByEmail || existingData.createdByName || "another user";
-            
-            // Show alert and STOP execution (prevents success view)
-            alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${addedBy}).`);
-            return; 
+            const creatorUid = existingData.createdByUid;
+
+            // Check if added by current user or someone else
+            if (creatorUid && currentUid && creatorUid === currentUid) {
+                alert(`This CPR (${cpr}) is already registered in your directory.`);
+            } else {
+                const addedBy = existingData.createdByName || existingData.createdByEmail || "another user";
+                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${addedBy}).`);
+            }
+            return; // Stop submission
         }
 
-        // 3. Get currently logged in user
-        const currentUser = firebase.auth().currentUser;
+        // 3. Save new record storing the display name or email
+        const userName = currentUser ? (currentUser.displayName || currentUser.email) : "Unknown";
 
-        // 4. Save new document if it does not exist
         await docRef.set({
             cpr: cpr,
             studentNumber: cpr,
             major: "N/A",
             phone: "N/A",
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdByUid: currentUser ? currentUser.uid : "unknown",
+            createdByUid: currentUid || "unknown",
             createdByEmail: currentUser ? currentUser.email : "unknown",
-            createdByName: currentUser ? (currentUser.displayName || currentUser.email) : "unknown"
+            createdByName: userName
         });
 
         // Clear input field
         cprInput.value = '';
 
-        // Show success screen only for new additions
+        // Navigate to success view
         showView('view-cpr-success');
 
     } catch (error) {
