@@ -205,39 +205,32 @@ function logoutUser() {
 // ==========================================
 async function addStudentCPR() {
     const cpr = document.getElementById('cpr-input').value.trim();
-    const studentNumber = document.getElementById('student-number-input')?.value.trim() || '';
-    const studentMajor = document.getElementById('student-major-input')?.value.trim() || '';
+    const studentNum = document.getElementById('student-number-input').value.trim();
 
-    if (cpr.length !== 9 || isNaN(cpr)) {
-        alert("CPR must be exactly 9 numbers.");
+    // Validate 9-digit CPR
+    if (!/^\d{9}$/.test(cpr)) {
+        alert(translations[currentLang].alert_cpr_length || "CPR must be exactly 9 digits.");
         return;
     }
 
     try {
-        const snapshot = await db.collection('students').where('cpr', '==', cpr).get();
-        if (!snapshot.empty) {
-            const existingDoc = snapshot.docs[0].data();
-            alert(`This CPR is already in the system and was added by user: ${existingDoc.added_by || 'Unknown'}`);
-            return;
-        }
-
-        const userIdentifier = currentUserData.email || currentUserData.displayName || currentUserData.uid;
-
-        await db.collection('students').add({
+        // Uses CPR as the primary key (.doc(cpr)) while keeping major & phone in the DB schema
+        await db.collection("students").doc(cpr).set({
             cpr: cpr,
-            studentNumber: studentNumber,
-            major: studentMajor,
-            name: "New Student",
-            gender: "male",
-            email: "",
-            added_by: userIdentifier,
+            studentNumber: studentNum,
+            major: "N/A",  // Placeholder to keep major in system
+            phone: "N/A",  // Placeholder to keep phone in system
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        }, { merge: true });
 
-        document.getElementById('cpr-form').reset();
+        // Clear input fields
+        document.getElementById('cpr-input').value = '';
+        document.getElementById('student-number-input').value = '';
+
         showView('view-cpr-success');
-    } catch (err) {
-        alert("Error adding student: " + err.message);
+    } catch (error) {
+        console.error("Error saving student record:", error);
+        alert("Failed to save record: " + error.message);
     }
 }
 
