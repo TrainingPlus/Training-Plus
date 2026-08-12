@@ -254,7 +254,7 @@ if (isMyRecord) {
         username = email ? email.split('@')[0] : "User";
     }
 
-    alert(`CPR ${cpr} was added by user: ${username}`);
+    alert(`This CPR (${cpr}) is already registered by user: ${creatorName}`);
 }
             return; // Stop submission
         }
@@ -290,26 +290,36 @@ if (isMyRecord) {
 function listenToStudentDirectory() {
     if (!currentUserData) return;
 
+    const currentUid = currentUserData.uid;
     const activeEmail = currentUserData.email;
-    const activeName = currentUserData.displayName;
 
-    db.collection('students').onSnapshot((snapshot) => {
-        studentList = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.added_by === activeEmail || data.added_by === activeName || data.added_by === currentUserData.uid) {
-                studentList.push({ id: doc.id, ...data });
-            }
-        });
-
-        renderStudentDirectory(studentList);
-    }, (error) => {
-        console.error("Error fetching students:", error);
-    });
+    // Fetch only students created by the logged-in user
+    db.collection('students')
+      .where('createdByUid', '==', currentUid)
+      .onSnapshot((snapshot) => {
+          studentList = [];
+          snapshot.forEach(doc => {
+              studentList.push({ id: doc.id, ...doc.data() });
+          });
+          renderStudentDirectory(studentList);
+      }, (error) => {
+          // Fallback query if older records use 'added_by' instead of 'createdByUid'
+          db.collection('students')
+            .where('added_by', '==', activeEmail)
+            .onSnapshot((snapshot) => {
+                studentList = [];
+                snapshot.forEach(doc => {
+                    studentList.push({ id: doc.id, ...doc.data() });
+                });
+                renderStudentDirectory(studentList);
+            }, (fallbackError) => {
+                console.error("Error fetching student directory:", fallbackError);
+            });
+      });
 }
 
 function handleSearch() {
-    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const q = document.getElementById('search-input')?.value.toLowerCase().trim() || "";
     const filtered = studentList.filter(s => 
         (s.name && s.name.toLowerCase().includes(q)) || 
         (s.cpr && s.cpr.includes(q)) ||
@@ -342,7 +352,7 @@ function downloadAllStudentsData() {
             "Email": s.email || '',
             "Enrolled Courses": courseNames,
             "CV Status": s.cvUrl ? 'Uploaded' : 'No CV',
-            "Added By": s.added_by || ''
+            "Added By": s.added_by || s.createdByName || ''
         };
     });
 
@@ -393,7 +403,7 @@ function downloadSingleStudentData(studentId) {
         ["CPR", student.cpr || 'N/A'],
         ["Gender", student.gender || 'N/A'],
         ["Email", student.email || 'N/A'],
-        ["Added By", student.added_by || 'N/A'],
+        ["Added By", student.added_by || student.createdByName || 'N/A'],
         ["CV Upload Status", student.cvUrl ? `Uploaded (${student.cvName || 'File'})` : 'No CV Uploaded'],
         ["", ""],
         ["ENROLLED COURSES", "ADDED DATE"]
@@ -419,7 +429,32 @@ function renderStudentDirectory(list) {
     if (!container) return;
     container.innerHTML = "";
 
-    const t = translations[currentLang];
+    // Fallback translation object to avoid runtime errors
+    const t = (typeof translations !== 'undefined' && translations[currentLang]) 
+        ? translations[currentLang] 
+        : {
+            lbl_no_students: "No student records found.",
+            btn_delete_course: "Delete Course",
+            lbl_no_courses: "No courses added yet.",
+            btn_view_cv: "📄 View / Download CV",
+            btn_delete_cv: "Delete CV",
+            lbl_no_cv: "No CV uploaded",
+            btn_download_excel: "Download Excel",
+            btn_delete_student: "Delete Student",
+            lbl_full_name: "Full Name:",
+            lbl_student_number: "Student Number:",
+            lbl_major: "Major:",
+            lbl_cpr: "CPR:",
+            lbl_gender: "Gender:",
+            opt_male: "Male",
+            opt_female: "Female",
+            lbl_email: "Email:",
+            lbl_cv_doc: "Student CV Document",
+            btn_upload_cv: "Upload CV",
+            lbl_enrolled_courses: "Enrolled Courses",
+            ph_course: "Enter course name",
+            btn_add_course: "+ Add Course"
+        };
 
     if (list.length === 0) {
         container.innerHTML = `<p style="text-align:center; color:#a0aec0; padding:20px;">${t.lbl_no_students}</p>`;
