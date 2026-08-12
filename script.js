@@ -20,7 +20,6 @@ const db = firebase.firestore();
 let currentUserData = null;
 let studentList = [];
 let currentLang = 'en';
-
 // Track initial page load time to prevent old unread badge alerts
 const pageLoadedAt = new Date();
 
