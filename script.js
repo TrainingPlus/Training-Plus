@@ -239,24 +239,32 @@ async function addStudentCPR() {
             const creatorEmail = existingData.createdByEmail || existingData.added_by;
 
             // Check if added by current user
-const isMyRecord = (creatorUid && creatorUid === currentUid) || 
-                   (creatorEmail && creatorEmail === currentEmail);
+            const isMyRecord = (creatorUid && creatorUid === currentUid) || 
+                               (creatorEmail && creatorEmail === currentEmail);
 
-if (isMyRecord) {
-            alert(`This CPR (${cpr}) is already registered by you.`);
-        } else {
-            // Get the username (falls back to email name if username isn't saved)
-            let username = existingData.createdByName || existingData.username;
+            if (isMyRecord) {
+                alert(`This CPR (${cpr}) is already registered by you.`);
+            } else {
+                // Check all possible name and email properties saved in Firestore
+                let username = existingData.createdByName || 
+                               existingData.username || 
+                               existingData.name || 
+                               existingData.added_by_name;
 
-            if (!username) {
-                const email = existingData.createdByEmail || existingData.added_by;
-                username = email ? email.split('@')[0] : "User";
+                if (!username || username === "User") {
+                    const rawEmail = existingData.createdByEmail || existingData.added_by || existingData.email;
+                    if (rawEmail && rawEmail.includes('@')) {
+                        username = rawEmail.split('@')[0];
+                    } else if (rawEmail) {
+                        username = rawEmail;
+                    } else {
+                        username = "mada saleh"; // Default fallback for older records
+                    }
+                }
+
+                alert(`This CPR (${cpr}) is already registered by user: ${username}`);
             }
-
-            // FIXED: Changed ${creatorName} to ${username}
-            alert(`This CPR (${cpr}) is already registered by user: ${username}`);
-        }
-        return; // Stop submission
+            return; // Stop submission
         }
 
         // 3. Save new record storing current user's name
