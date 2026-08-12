@@ -283,25 +283,12 @@ async function addStudentCPR() {
 function listenToStudentDirectory() {
     if (!currentUserData) return;
 
-    const activeEmail = currentUserData.email;
-    const activeName = currentUserData.displayName;
-    const activeUid = currentUserData.uid;
-
     db.collection('students').onSnapshot((snapshot) => {
         studentList = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            // Match against all possible creator identifiers to ensure records display properly
-            if (
-                data.createdByUid === activeUid || 
-                data.createdByEmail === activeEmail || 
-                data.createdByName === activeName || 
-                data.added_by === activeEmail || 
-                data.added_by === activeName || 
-                data.added_by === activeUid
-            ) {
-                studentList.push({ id: doc.id, ...data });
-            }
+            // Load all documents into the list without filtering by user
+            studentList.push({ id: doc.id, ...data });
         });
 
         renderStudentDirectory(studentList);
@@ -309,6 +296,7 @@ function listenToStudentDirectory() {
         console.error("Error fetching students:", error);
     });
 }
+
 // ==========================================
 // 6. COURSE MANAGEMENT
 // ==========================================
