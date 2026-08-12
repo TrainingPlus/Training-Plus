@@ -246,8 +246,15 @@ async function addStudentCPR() {
             if (isMyRecord) {
                 alert(`This CPR (${cpr}) is already registered in your directory.`);
             } else {
-                const addedBy = existingData.createdByName || existingData.createdByEmail || existingData.added_by || "another user";
-                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${addedBy}).`);
+                // Get creator username matching Account Modal style
+                let creatorName = existingData.createdByName;
+                if (!creatorName && existingData.createdByEmail) {
+                    creatorName = existingData.createdByEmail.split('@')[0];
+                } else if (!creatorName && existingData.added_by) {
+                    creatorName = existingData.added_by.includes('@') ? existingData.added_by.split('@')[0] : existingData.added_by;
+                }
+
+                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName || "Unknown User"}).`);
             }
             return; // Stop submission
         }
