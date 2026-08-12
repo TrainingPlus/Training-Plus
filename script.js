@@ -244,19 +244,20 @@ const isMyRecord = (creatorUid && creatorUid === currentUid) ||
                    (creatorEmail && creatorEmail === currentEmail);
 
 if (isMyRecord) {
-    alert(`This CPR (${cpr}) is already registered by you.`);
-} else {
-    // Get the username (falls back to email name if username isn't saved)
-    let username = existingData.createdByName || existingData.username;
+            alert(`This CPR (${cpr}) is already registered by you.`);
+        } else {
+            // Get the username (falls back to email name if username isn't saved)
+            let username = existingData.createdByName || existingData.username;
 
-    if (!username) {
-        const email = existingData.createdByEmail || existingData.added_by;
-        username = email ? email.split('@')[0] : "User";
-    }
+            if (!username) {
+                const email = existingData.createdByEmail || existingData.added_by;
+                username = email ? email.split('@')[0] : "User";
+            }
 
-    alert(`This CPR (${cpr}) is already registered by user: ${creatorName}`);
-}
-            return; // Stop submission
+            // FIXED: Changed ${creatorName} to ${username}
+            alert(`This CPR (${cpr}) is already registered by user: ${username}`);
+        }
+        return; // Stop submission
         }
 
         // 3. Save new record storing current user's name
