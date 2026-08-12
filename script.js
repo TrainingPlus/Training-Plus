@@ -204,29 +204,34 @@ function logoutUser() {
 // 4. CPR RECORD MANAGEMENT
 // ==========================================
 async function addStudentCPR() {
-    const cpr = document.getElementById('cpr-input').value.trim();
-    const studentNum = document.getElementById('student-number-input').value.trim();
+    const cprInput = document.getElementById('cpr-input');
+    if (!cprInput) return;
 
-    // Validate 9-digit CPR
+    const cpr = cprInput.value.trim();
+
+    // Validate 9-digit CPR format
     if (!/^\d{9}$/.test(cpr)) {
-        alert(translations[currentLang].alert_cpr_length || "CPR must be exactly 9 digits.");
+        const errorMsg = (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang].alert_cpr_length) 
+            ? translations[currentLang].alert_cpr_length 
+            : "CPR must be exactly 9 digits.";
+        alert(errorMsg);
         return;
     }
 
     try {
-        // Uses CPR as the primary key (.doc(cpr)) while keeping major & phone in the DB schema
+        // Save using CPR as unique key while preserving schema default values
         await db.collection("students").doc(cpr).set({
             cpr: cpr,
-            studentNumber: "N/A",  // Placeholder to keep student number in system
-            major: "N/A",  // Placeholder to keep major in system
-            phone: "N/A",  // Placeholder to keep phone in system
+            studentNumber: cpr, // Using CPR as default student number
+            major: "N/A",
+            phone: "N/A",
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // Clear input fields
-        document.getElementById('cpr-input').value = '';
-        document.getElementById('student-number-input').value = '';
+        // Clear CPR field
+        cprInput.value = '';
 
+        // Switch view to success screen
         showView('view-cpr-success');
     } catch (error) {
         console.error("Error saving student record:", error);
