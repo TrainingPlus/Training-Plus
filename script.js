@@ -219,26 +219,25 @@ async function addStudentCPR() {
     }
 
     try {
-        // Save using CPR as unique key while preserving schema default values
+        // Save using CPR as unique key while preserving database schema fields
         await db.collection("students").doc(cpr).set({
             cpr: cpr,
-            studentNumber: cpr, // Using CPR as default student number
+            studentNumber: cpr, // Sets student number equal to CPR
             major: "N/A",
             phone: "N/A",
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // Clear CPR field
+        // Clear input field
         cprInput.value = '';
 
-        // Switch view to success screen
+        // Navigate to success view
         showView('view-cpr-success');
     } catch (error) {
         console.error("Error saving student record:", error);
         alert("Failed to save record: " + error.message);
     }
 }
-
 function resetAndAddAnotherCPR() {
     document.getElementById('cpr-form').reset();
     showView('view-add-cpr');
