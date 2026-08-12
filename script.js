@@ -240,27 +240,22 @@ async function addStudentCPR() {
             const creatorEmail = existingData.createdByEmail || existingData.added_by;
 
             // Check if added by current user
-            const isMyRecord = (creatorUid && creatorUid === currentUid) || 
-                               (creatorEmail && creatorEmail === currentEmail);
+const isMyRecord = (creatorUid && creatorUid === currentUid) || 
+                   (creatorEmail && creatorEmail === currentEmail);
 
-            if (isMyRecord) {
-                alert(`This CPR (${cpr}) is already registered in your directory.`);
-            } else {
-                // Extract username from all possible saved fields
-                let creatorName = existingData.createdByName || existingData.username;
+if (isMyRecord) {
+    alert(`This CPR (${cpr}) is already registered by you.`);
+} else {
+    // Get the username (falls back to email name if username isn't saved)
+    let username = existingData.createdByName || existingData.username;
 
-                if (!creatorName || creatorName === "Unknown" || creatorName === "User") {
-                    const rawIdentifier = existingData.createdByEmail || existingData.added_by;
-                    if (rawIdentifier) {
-                        // Takes the part before @ if an email is stored
-                        creatorName = rawIdentifier.includes('@') ? rawIdentifier.split('@')[0] : rawIdentifier;
-                    } else {
-                        creatorName = "User";
-                    }
-                }
+    if (!username) {
+        const email = existingData.createdByEmail || existingData.added_by;
+        username = email ? email.split('@')[0] : "User";
+    }
 
-                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName}).`);
-            }
+    alert(`CPR ${cpr} was added by user: ${username}`);
+}
             return; // Stop submission
         }
 
