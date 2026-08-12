@@ -209,7 +209,7 @@ async function addStudentCPR() {
 
     const cpr = cprInput.value.trim();
 
-    // 1. Validate 9-digit CPR format
+    // Validate 9-digit CPR format
     if (!/^\d{9}$/.test(cpr)) {
         const errorMsg = (typeof translations !== 'undefined' && translations[currentLang] && translations[currentLang].alert_cpr_length) 
             ? translations[currentLang].alert_cpr_length 
@@ -219,39 +219,50 @@ async function addStudentCPR() {
     }
 
     try {
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) {
+            alert("You must be logged in to add a CPR.");
+            return;
+        }
+
+        const currentUid = currentUser.uid;
+        const currentEmail = currentUser.email;
+        const currentName = currentUser.displayName || currentUser.email;
+
         const docRef = db.collection("students").doc(cpr);
         const docSnap = await docRef.get();
 
-        const currentUser = firebase.auth().currentUser;
-        const currentUid = currentUser ? currentUser.uid : null;
-
-        // 2. Check if CPR already exists
+        // Check if CPR already exists
         if (docSnap.exists) {
             const existingData = docSnap.data();
-            const creatorUid = existingData.createdByUid;
+            
+            const creatorUid = existingData.createdByUid || existingData.added_by;
+            const creatorEmail = existingData.createdByEmail || existingData.added_by;
 
-            // Check if added by current user or someone else
-            if (creatorUid && currentUid && creatorUid === currentUid) {
+            // Check if added by current user
+            const isMyRecord = (creatorUid && creatorUid === currentUid) || 
+                               (creatorEmail && creatorEmail === currentEmail);
+
+            if (isMyRecord) {
                 alert(`This CPR (${cpr}) is already registered in your directory.`);
             } else {
-                const addedBy = existingData.createdByName || existingData.createdByEmail || "another user";
+                const addedBy = existingData.createdByName || existingData.createdByEmail || existingData.added_by || "another user";
                 alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${addedBy}).`);
             }
             return; // Stop submission
         }
 
-        // 3. Save new record storing the display name or email
-        const userName = currentUser ? (currentUser.displayName || currentUser.email) : "Unknown";
-
+        // Save new record with consistent ownership fields
         await docRef.set({
             cpr: cpr,
             studentNumber: cpr,
             major: "N/A",
             phone: "N/A",
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            createdByUid: currentUid || "unknown",
-            createdByEmail: currentUser ? currentUser.email : "unknown",
-            createdByName: userName
+            createdByUid: currentUid,
+            createdByEmail: currentEmail,
+            createdByName: currentName,
+            added_by: currentEmail // Ensures compatibility with directory listener
         });
 
         // Clear input field
@@ -265,10 +276,6 @@ async function addStudentCPR() {
         alert("Failed to process request: " + error.message);
     }
 }
-function resetAndAddAnotherCPR() {
-    document.getElementById('cpr-form').reset();
-    showView('view-add-cpr');
-}
 
 // ==========================================
 // 5. STUDENT DIRECTORY & EXCEL EXPORTS
@@ -278,12 +285,21 @@ function listenToStudentDirectory() {
 
     const activeEmail = currentUserData.email;
     const activeName = currentUserData.displayName;
+    const activeUid = currentUserData.uid;
 
     db.collection('students').onSnapshot((snapshot) => {
         studentList = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (data.added_by === activeEmail || data.added_by === activeName || data.added_by === currentUserData.uid) {
+            // Match against all possible creator identifiers to ensure records display properly
+            if (
+                data.createdByUid === activeUid || 
+                data.createdByEmail === activeEmail || 
+                data.createdByName === activeName || 
+                data.added_by === activeEmail || 
+                data.added_by === activeName || 
+                data.added_by === activeUid
+            ) {
                 studentList.push({ id: doc.id, ...data });
             }
         });
@@ -293,241 +309,6 @@ function listenToStudentDirectory() {
         console.error("Error fetching students:", error);
     });
 }
-
-function handleSearch() {
-    const q = document.getElementById('search-input').value.toLowerCase().trim();
-    const filtered = studentList.filter(s => 
-        (s.name && s.name.toLowerCase().includes(q)) || 
-        (s.cpr && s.cpr.includes(q)) ||
-        (s.studentNumber && s.studentNumber.toLowerCase().includes(q)) ||
-        (s.major && s.major.toLowerCase().includes(q))
-    );
-    renderStudentDirectory(filtered);
-}
-
-// EXCEL EXPORTS
-function downloadAllStudentsData() {
-    if (studentList.length === 0) {
-        alert("No student data available to download.");
-        return;
-    }
-
-    if (typeof XLSX === 'undefined') {
-        alert("Excel export library is loading, please try again in a second.");
-        return;
-    }
-
-    const studentsRows = studentList.map(s => {
-        const courseNames = Array.isArray(s.courses) ? s.courses.map(c => c.name).join(', ') : 'None';
-        return {
-            "Full Name": s.name || '',
-            "Student Number": s.studentNumber || '',
-            "Major": s.major || '',
-            "CPR": s.cpr || '',
-            "Gender": s.gender || '',
-            "Email": s.email || '',
-            "Enrolled Courses": courseNames,
-            "CV Status": s.cvUrl ? 'Uploaded' : 'No CV',
-            "Added By": s.added_by || ''
-        };
-    });
-
-    const courseRows = [];
-    studentList.forEach(s => {
-        if (Array.isArray(s.courses) && s.courses.length > 0) {
-            s.courses.forEach(c => {
-                courseRows.push({
-                    "Student Name": s.name || '',
-                    "CPR": s.cpr || '',
-                    "Course Name": c.name || '',
-                    "Date Added": c.addedAt || ''
-                });
-            });
-        }
-    });
-
-    const wb = XLSX.utils.book_new();
-    const wsStudents = XLSX.utils.json_to_sheet(studentsRows);
-    XLSX.utils.book_append_sheet(wb, wsStudents, "All Students");
-
-    if (courseRows.length > 0) {
-        const wsCourses = XLSX.utils.json_to_sheet(courseRows);
-        XLSX.utils.book_append_sheet(wb, wsCourses, "Course Details");
-    }
-
-    const todayStr = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `All_Students_Data_${todayStr}.xlsx`);
-}
-
-function downloadSingleStudentData(studentId) {
-    const student = studentList.find(s => s.id === studentId);
-    if (!student) {
-        alert("Student record not found.");
-        return;
-    }
-
-    if (typeof XLSX === 'undefined') {
-        alert("Excel export library is loading, please try again in a second.");
-        return;
-    }
-
-    const recordRows = [
-        ["STUDENT RECORD INFORMATION", ""],
-        ["Full Name", student.name || 'N/A'],
-        ["Student Number", student.studentNumber || 'N/A'],
-        ["Major", student.major || 'N/A'],
-        ["CPR", student.cpr || 'N/A'],
-        ["Gender", student.gender || 'N/A'],
-        ["Email", student.email || 'N/A'],
-        ["Added By", student.added_by || 'N/A'],
-        ["CV Upload Status", student.cvUrl ? `Uploaded (${student.cvName || 'File'})` : 'No CV Uploaded'],
-        ["", ""],
-        ["ENROLLED COURSES", "ADDED DATE"]
-    ];
-
-    if (Array.isArray(student.courses) && student.courses.length > 0) {
-        student.courses.forEach(c => {
-            recordRows.push([c.name, c.addedAt || '']);
-        });
-    } else {
-        recordRows.push(["No courses enrolled", ""]);
-    }
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(recordRows);
-    XLSX.utils.book_append_sheet(wb, ws, "Student Details");
-
-    XLSX.writeFile(wb, `Student_${student.cpr || studentId}.xlsx`);
-}
-
-function renderStudentDirectory(list) {
-    const container = document.getElementById('student-container');
-    if (!container) return;
-    container.innerHTML = "";
-
-    const t = translations[currentLang];
-
-    if (list.length === 0) {
-        container.innerHTML = `<p style="text-align:center; color:#a0aec0; padding:20px;">${t.lbl_no_students}</p>`;
-        return;
-    }
-
-    list.forEach((student) => {
-        const item = document.createElement('div');
-        item.className = "student-item";
-
-        // Enrolled courses
-        let coursesHTML = "";
-        if (student.courses && Array.isArray(student.courses) && student.courses.length > 0) {
-            coursesHTML = student.courses.map((c, index) => `
-                <li style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border: 1px solid #e2e8f0; border-radius:6px; margin-bottom:6px; font-size:0.88rem;">
-                    <div>
-                        <strong style="color: #2d3748;">${escapeHTML(c.name)}</strong> 
-                        <span style="color:#718096; margin-left:8px; font-size:0.80rem;">(${c.addedAt})</span>
-                    </div>
-                    <button type="button" onclick="removeCourse('${student.id}', ${index})" 
-                        style="background: #fff5f5; border: 1px solid #feb2b2; color: #e53e3e; cursor: pointer; font-size: 0.75rem; padding: 4px 10px; border-radius: 100px; transition: all 0.2s;" 
-                        onmouseover="this.style.background='#fee2e2'" 
-                        onmouseout="this.style.background='#fff5f5'"
-                    >
-                        ${t.btn_delete_course}
-                    </button>
-                </li>
-            `).join("");
-        } else {
-            coursesHTML = `<p style="font-size:0.82rem; color:#a0aec0; margin-top:4px;">${t.lbl_no_courses}</p>`;
-        }
-
-        // CV status
-        const cvDisplay = student.cvUrl 
-            ? `<div style="display: flex; align-items: center; gap: 8px;">
-                <a href="${student.cvUrl}" download="${student.cvName || 'Student_CV'}" target="_blank" style="color:var(--accent-slate-blue, #2b6cb0); font-weight:600; text-decoration:underline; font-size:0.85rem;">${t.btn_view_cv}</a>
-                <button type="button" onclick="deleteStudentCV('${student.id}')" 
-                    style="background: #fff5f5; border: 1px solid #feb2b2; color: #e53e3e; cursor: pointer; font-size: 0.75rem; padding: 4px 10px; border-radius: 100px; transition: all 0.2s;" 
-                    onmouseover="this.style.background='#fee2e2'" 
-                    onmouseout="this.style.background='#fff5f5'"
-                >
-                    ${t.btn_delete_cv}
-                </button>
-               </div>`
-            : `<span style="color:#a0aec0; font-size:0.85rem;">${t.lbl_no_cv}</span>`;
-
-        // Render Student Card
-        item.innerHTML = `
-            <div class="student-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                <span>${escapeHTML(student.name)} (${escapeHTML(student.cpr)})</span>
-                <svg class="arrow-icon" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </div>
-            <div class="student-details hidden">
-                <div class="student-actions-wrapper" style="display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 12px;">
-                    <button class="nav-btn" onclick="downloadSingleStudentData('${student.id}')" style="background: #edf2f7; border: 1px solid #cbd5e0; color: #2d3748; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">${t.btn_download_excel}</button>
-                    <button class="delete-icon-btn" onclick="deleteStudent('${student.id}')">${t.btn_delete_student}</button>
-                </div>
-                
-                <div class="grid-form">
-                    <label>${t.lbl_full_name} 
-                        <input type="text" value="${escapeHTML(student.name || '')}" onchange="updateStudentField('${student.id}', 'name', this.value)">
-                    </label>
-                    <label>${t.lbl_student_number || 'Student Number:'} 
-                        <input type="text" value="${escapeHTML(student.studentNumber || '')}" onchange="updateStudentField('${student.id}', 'studentNumber', this.value)">
-                    </label>
-                    <label>${t.lbl_major || 'Major:'} 
-                        <input type="text" value="${escapeHTML(student.major || '')}" onchange="updateStudentField('${student.id}', 'major', this.value)">
-                    </label>
-                    <label>${t.lbl_cpr} 
-                        <input type="text" value="${escapeHTML(student.cpr)}" readonly>
-                    </label>
-                    <label>${t.lbl_gender} 
-                        <select onchange="updateStudentField('${student.id}', 'gender', this.value)">
-                            <option value="male" ${student.gender === 'male' ? 'selected' : ''}>${t.opt_male}</option>
-                            <option value="female" ${student.gender === 'female' ? 'selected' : ''}>${t.opt_female}</option>
-                        </select>
-                    </label>
-                    <label>${t.lbl_email} 
-                        <input type="email" value="${escapeHTML(student.email || '')}" onchange="updateStudentField('${student.id}', 'email', this.value)">
-                    </label>
-                </div>
-
-                <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color, #e2e8f0);">
-
-                <div style="margin-bottom: 16px;">
-                    <h4 style="margin-bottom: 8px; color: var(--accent-slate-blue, #2b6cb0);">${t.lbl_cv_doc}</h4>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="file" id="cv-input-${student.id}" accept=".pdf,.doc,.docx" style="font-size: 0.85rem;">
-                        <button type="button" class="primary-btn" onclick="uploadStudentCV('${student.id}')" style="padding: 6px 12px; font-size: 0.85rem;">${t.btn_upload_cv}</button>
-                        <div style="margin-left: auto;">${cvDisplay}</div>
-                    </div>
-                </div>
-
-                <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color, #e2e8f0);">
-
-                <div>
-                    <h4 style="margin-bottom: 8px; color: var(--accent-slate-blue, #2b6cb0);">${t.lbl_enrolled_courses}</h4>
-                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                        <input type="text" id="course-input-${student.id}" placeholder="${t.ph_course}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 6px; font-size: 0.85rem;">
-                        <button type="button" class="primary-btn" onclick="addCourseToStudent('${student.id}')" style="padding: 6px 14px; font-size: 0.85rem;">${t.btn_add_course}</button>
-                    </div>
-                    
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        ${coursesHTML}
-                    </ul>
-                </div>
-            </div>
-        `;
-        container.appendChild(item);
-    });
-}
-
-async function updateStudentField(id, field, value) {
-    await db.collection('students').doc(id).update({ [field]: value });
-}
-
-async function deleteStudent(id) {
-    if (confirm("Delete this student entry?")) {
-        await db.collection('students').doc(id).delete();
-    }
-}
-
 // ==========================================
 // 6. COURSE MANAGEMENT
 // ==========================================
