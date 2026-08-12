@@ -246,16 +246,16 @@ async function addStudentCPR() {
             if (isMyRecord) {
                 alert(`This CPR (${cpr}) is already registered in your directory.`);
             } else {
-                // Determine the other user's name accurately
-                let creatorName = existingData.createdByName;
-                
+                // Extract username from all possible saved fields
+                let creatorName = existingData.createdByName || existingData.username;
+
                 if (!creatorName || creatorName === "Unknown" || creatorName === "User") {
-                    if (existingData.createdByEmail) {
-                        creatorName = existingData.createdByEmail.split('@')[0];
-                    } else if (existingData.added_by) {
-                        creatorName = existingData.added_by.includes('@') ? existingData.added_by.split('@')[0] : existingData.added_by;
+                    const rawIdentifier = existingData.createdByEmail || existingData.added_by;
+                    if (rawIdentifier) {
+                        // Takes the part before @ if an email is stored
+                        creatorName = rawIdentifier.includes('@') ? rawIdentifier.split('@')[0] : rawIdentifier;
                     } else {
-                        creatorName = "another user";
+                        creatorName = "User";
                     }
                 }
 
