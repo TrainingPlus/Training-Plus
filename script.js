@@ -217,7 +217,7 @@ async function addStudentCPR() {
         // Uses CPR as the primary key (.doc(cpr)) while keeping major & phone in the DB schema
         await db.collection("students").doc(cpr).set({
             cpr: cpr,
-            studentNumber: studentNum,
+            studentNumber: "N/A",  // Placeholder to keep student number in system
             major: "N/A",  // Placeholder to keep major in system
             phone: "N/A",  // Placeholder to keep phone in system
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
