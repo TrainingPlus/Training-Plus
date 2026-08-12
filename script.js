@@ -225,7 +225,6 @@ async function addStudentCPR() {
             return;
         }
 
-        // Generate current user's display name or email prefix
         const accountUsername = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : "User");
         const currentUid = currentUser.uid;
         const currentEmail = currentUser.email;
@@ -247,23 +246,25 @@ async function addStudentCPR() {
             if (isMyRecord) {
                 alert(`This CPR (${cpr}) is already registered in your directory.`);
             } else {
-                // Extract username from all possible fields (createdByName, createdByEmail, or added_by)
+                // Determine the other user's name accurately
                 let creatorName = existingData.createdByName;
                 
-                if (!creatorName || creatorName === "Unknown") {
+                if (!creatorName || creatorName === "Unknown" || creatorName === "User") {
                     if (existingData.createdByEmail) {
                         creatorName = existingData.createdByEmail.split('@')[0];
                     } else if (existingData.added_by) {
                         creatorName = existingData.added_by.includes('@') ? existingData.added_by.split('@')[0] : existingData.added_by;
+                    } else {
+                        creatorName = "another user";
                     }
                 }
 
-                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName || accountUsername}).`);
+                alert(`This CPR (${cpr}) is already registered in the directory (Added by: ${creatorName}).`);
             }
             return; // Stop submission
         }
 
-        // 3. Save new record storing the exact account username
+        // 3. Save new record storing current user's name
         await docRef.set({
             cpr: cpr,
             studentNumber: cpr,
