@@ -293,30 +293,29 @@ function listenToStudentDirectory() {
 
     const currentUid = currentUserData.uid;
     const activeEmail = currentUserData.email;
+    const activeName = currentUserData.displayName;
 
-    // Fetch only students created by the logged-in user
-    db.collection('students')
-      .where('createdByUid', '==', currentUid)
-      .onSnapshot((snapshot) => {
-          studentList = [];
-          snapshot.forEach(doc => {
-              studentList.push({ id: doc.id, ...doc.data() });
-          });
-          renderStudentDirectory(studentList);
-      }, (error) => {
-          // Fallback query if older records use 'added_by' instead of 'createdByUid'
-          db.collection('students')
-            .where('added_by', '==', activeEmail)
-            .onSnapshot((snapshot) => {
-                studentList = [];
-                snapshot.forEach(doc => {
-                    studentList.push({ id: doc.id, ...doc.data() });
-                });
-                renderStudentDirectory(studentList);
-            }, (fallbackError) => {
-                console.error("Error fetching student directory:", fallbackError);
-            });
-      });
+    // Listen to all students and filter on client side so no older records are lost
+    db.collection('students').onSnapshot((snapshot) => {
+        studentList = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            
+            // Checks UID, Email, or Display Name for older and newer records
+            const isMine = (data.createdByUid && data.createdByUid === currentUid) ||
+                           (data.added_by && data.added_by === activeEmail) ||
+                           (data.added_by && data.added_by === activeName) ||
+                           (data.createdByEmail && data.createdByEmail === activeEmail);
+
+            if (isMine) {
+                studentList.push({ id: doc.id, ...data });
+            }
+        });
+
+        renderStudentDirectory(studentList);
+    }, (error) => {
+        console.error("Error fetching student directory:", error);
+    });
 }
 
 function handleSearch() {
