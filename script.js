@@ -308,7 +308,6 @@ function resetAndAddAnotherCPR() {
 // ==========================================
 function listenToStudentDirectory() {
     if (!currentUserData) return;
-
     const currentUid = currentUserData.uid;
     const activeEmail = currentUserData.email;
     const activeName = currentUserData.displayName;
