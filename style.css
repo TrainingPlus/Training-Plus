@@ -377,3 +377,7 @@ body[dir="rtl"] { direction: rtl; text-align: right; }
 .emoji-picker-container span:hover {
     background-color: #edf2f7;
 }
+
+.hidden {
+    display: none !important;
+}
