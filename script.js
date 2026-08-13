@@ -292,6 +292,17 @@ async function addStudentCPR() {
     }
 }
 
+function resetAndAddAnotherCPR() {
+    // 1. Clear the CPR input field
+    const cprInput = document.getElementById('cpr-input');
+    if (cprInput) {
+        cprInput.value = '';
+    }
+
+    // 2. Switch the view back to the CPR entry form
+    showView('view-add-cpr');
+}
+
 // ==========================================
 // 5. STUDENT DIRECTORY & EXCEL EXPORTS
 // ==========================================
