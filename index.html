@@ -85,8 +85,8 @@
                 <h2 data-i18n="cpr_success_title">CPR Added Successfully!</h2>
                 <p class="subtitle" data-i18n="cpr_success_subtitle">Would you like to add another student CPR record?</p>
                 <div class="button-group center-btn">
-                    <button class="primary-btn" data-i18n="btn_add_another" onclick="resetAndAddAnotherCPR()">+ Add Another CPR</button>
-                    <button class="secondary-btn" data-i18n="btn_go_directory" onclick="showView('view-home')">Go to Directory</button>
+                    <button type="button" class="primary-btn" data-i18n="btn_add_another" onclick="resetAndAddAnotherCPR()">+ Add Another CPR</button>
+                    <button type="button" class="secondary-btn" data-i18n="btn_go_directory" onclick="showView('view-home')">Go to Directory</button>
                 </div>
             </div>
         </section>
@@ -103,13 +103,12 @@
         </div>
     </div>
 
-   <!-- Group Chat Floating Widget -->
-<div id="chat-widget">
+    <!-- Group Chat Floating Widget -->
     <div id="chat-widget">
-    <button class="chat-fab" onclick="toggleChatWindow()">
-        💬
-        <span id="chat-unread-badge" class="hidden">0</span>
-    </button>
+        <button class="chat-fab" onclick="toggleChatWindow()">
+            💬
+            <span id="chat-unread-badge" class="hidden">0</span>
+        </button>
     
     <div id="chat-window" class="chat-box hidden">
         <div class="chat-header">
@@ -132,7 +131,6 @@
             <input type="text" id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
             <button type="button" class="primary-btn" data-i18n="btn_send" onclick="sendChatMessage()">Send</button>
         </div>
-    </div>
 </div>
     
     <footer class="bottom-footer">
