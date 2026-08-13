@@ -293,18 +293,19 @@ async function addStudentCPR() {
 }
 
 function resetAndAddAnotherCPR() {
-    console.log("Resetting form and switching view...");
-
-    // 1. Clear input
+    // 1. Clear the input field
     const cprInput = document.getElementById('cpr-input');
     if (cprInput) {
         cprInput.value = '';
-    } else {
-        console.warn("Element 'cpr-input' not found.");
     }
 
-    // 2. Switch view
+    // 2. Switch back to CPR entry view
     showView('view-add-cpr');
+
+    // 3. Focus input field for fast entry
+    setTimeout(() => {
+        if (cprInput) cprInput.focus();
+    }, 100);
 }
 
 // ==========================================
