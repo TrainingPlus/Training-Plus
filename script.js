@@ -909,6 +909,80 @@ function runLiveFooterClock() {
     }
 }
 
+// ==========================================
+// STUDENT DIRECTORY & TAMKEEN STATUS UPDATES
+// ==========================================
+
+// Update Tamkeen status directly from Directory card dropdown
+function updateTamkeenStatus(studentDocId, newStatus) {
+    db.collection("students").doc(studentDocId).update({
+        tamkeenStatus: newStatus
+    }).then(() => {
+        alert("Tamkeen status updated!");
+    }).catch(error => {
+        console.error("Error updating Tamkeen status: ", error);
+    });
+}
+
+// ==========================================
+// EMPLOYEE TRANSFER TO OPERATOR CLASS
+// ==========================================
+
+function transferStudentToClass(cpr, studentName, tamkeenStatus, comment) {
+    const classSelect = document.getElementById(`class-select-${cpr}`);
+    if (!classSelect || !classSelect.value) {
+        alert("Please select a class first.");
+        return;
+    }
+
+    const classId = classSelect.value;
+    const user = firebase.auth().currentUser;
+    const currentUsername = user ? (user.displayName || user.email) : "Unknown Employee";
+
+    db.collection("class_transfers").add({
+        classId: classId,
+        cpr: cpr,
+        studentName: studentName,
+        transferredBy: currentUsername,
+        tamkeenStatus: tamkeenStatus || "Pending",
+        comment: comment || "",
+        transferredAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert("Student transferred to class successfully!");
+    }).catch(error => {
+        console.error("Error transferring student: ", error);
+    });
+}
+
+// ==========================================
+// OPERATOR DASHBOARD VIEW
+// ==========================================
+
+function loadOperatorClassTable(selectedClassId) {
+    db.collection("class_transfers")
+      .where("classId", "==", selectedClassId)
+      .onSnapshot(snapshot => {
+          const tableBody = document.getElementById("operator-table-body");
+          if (!tableBody) return;
+
+          let tableRows = "";
+          snapshot.forEach(doc => {
+              const data = doc.data();
+              tableRows += `
+                  <tr>
+                      <td>${data.studentName || 'N/A'}</td>
+                      <td>${data.cpr}</td>
+                      <td><span class="badge">${data.tamkeenStatus}</span></td>
+                      <td>${data.comment || "N/A"}</td>
+                      <td><strong>${data.transferredBy}</strong></td>
+                  </tr>
+              `;
+          });
+
+          tableBody.innerHTML = tableRows;
+      });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     runLiveFooterClock();
     applyLanguageTranslations();
