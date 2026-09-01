@@ -23,7 +23,10 @@
             </div>
         </div>
         <div class="nav-controls">
-            <!-- Language Toggle Button -->
+            <!-- Operator Dashboard Navigation Button -->
+            <button id="operator-view-btn" class="nav-btn hidden" onclick="showView('view-operator')">Operator Dashboard</button>
+
+            <!-- Language & Account Controls -->
             <button id="lang-toggle-btn" class="nav-btn" onclick="toggleLanguage()">AR / EN</button>
             <button id="download-all-btn" class="nav-btn hidden" data-i18n="download_all" onclick="downloadAllStudentsData()">Download All (Excel)</button>
             <button id="account-btn" class="nav-btn hidden" data-i18n="account" onclick="openAccountModal()">Account</button>
@@ -59,24 +62,44 @@
                 <h2 data-i18n="student_directory">Student Directory</h2>
                 <button class="primary-btn" data-i18n="add_new_cpr" onclick="showView('view-add-cpr')">+ Add New CPR</button>
             </div>
+            <!-- Student List cards will render dynamic Tamkeen dropdowns & class transfers -->
             <div id="student-container" class="student-list"></div>
         </section>
 
         <!-- CPR Entry View -->
-<section id="view-add-cpr" class="card-view hidden">
-    <h2 data-i18n="register_cpr">Register New CPR</h2>
-    <p class="subtitle" data-i18n="register_cpr_subtitle">Enter a 9-digit CPR number to add a student.</p>
-    <form id="cpr-form" class="standard-form" onsubmit="addStudentCPR(); return false;">
-        <label>
-            <span data-i18n="cpr_label">CPR Number (9 Digits):</span>
-            <input type="text" id="cpr-input" maxlength="9" required placeholder="e.g. 980123456">
-        </label>
-        <div class="button-group">
-            <button type="submit" class="primary-btn" id="add-student-btn" data-i18n="btn_submit">Submit Record</button>
-            <button type="button" class="secondary-btn" data-i18n="btn_back" onclick="showView('view-home')">Done / Back</button>
-        </div>
-    </form>
-</section>
+        <section id="view-add-cpr" class="card-view hidden">
+            <h2 data-i18n="register_cpr">Register New CPR</h2>
+            <p class="subtitle" data-i18n="register_cpr_subtitle">Enter a 9-digit CPR number, select Tamkeen status, and add notes.</p>
+            <form id="cpr-form" class="standard-form" onsubmit="addStudentCPR(); return false;">
+                
+                <!-- CPR Input -->
+                <label style="display: block; margin-bottom: 16px;">
+                    <span data-i18n="cpr_label">CPR Number (9 Digits):</span>
+                    <input type="text" id="cpr-input" maxlength="9" required placeholder="e.g. 980123456" style="width: 100%; margin-top: 6px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                </label>
+                
+                <!-- Tamkeen Status Field -->
+                <label style="display: block; margin-bottom: 16px;">
+                    <span>Tamkeen Status:</span>
+                    <select id="tamkeen-input" style="width: 100%; margin-top: 6px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </label>
+
+                <!-- Comment / Notes Field -->
+                <label style="display: block; margin-bottom: 20px;">
+                    <span data-i18n="comment_label">Comments / Notes:</span>
+                    <textarea id="comment-input" rows="3" placeholder="Enter comments or notes about the student..." style="width: 100%; margin-top: 6px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;"></textarea>
+                </label>
+
+                <div class="button-group">
+                    <button type="submit" class="primary-btn" id="add-student-btn" data-i18n="btn_submit">Submit Record</button>
+                    <button type="button" class="secondary-btn" data-i18n="btn_back" onclick="showView('view-home')">Done / Back</button>
+                </div>
+            </form>
+        </section>
 
         <!-- CPR Success View -->
         <section id="view-cpr-success" class="card-view hidden">
@@ -90,6 +113,45 @@
                 </div>
             </div>
         </section>
+
+        <!-- Operator Dashboard View -->
+        <section id="view-operator" class="card-view hidden">
+            <div class="dashboard-header" style="margin-bottom: 20px;">
+                <h2>Operator Class Roster</h2>
+                <button class="secondary-btn" onclick="showView('view-home')">Back to Directory</button>
+            </div>
+            
+            <!-- Active Class Selection -->
+            <div style="margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label for="operator-class-select" style="font-weight: 600; color: #334155; display: block; margin-bottom: 8px;">
+                    Select Open Class:
+                </label>
+                <select id="operator-class-select" onchange="loadOperatorClassTable(this.value)" style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <option value="">-- Choose an Open Class --</option>
+                </select>
+            </div>
+
+            <!-- Roster Table -->
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                    <thead>
+                        <tr style="background: #2b6cb0; color: white;">
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">Student Name</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">CPR Number</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">Tamkeen Status</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">Comment / Notes</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">Transferred By (Employee)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="operator-table-body">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 16px; color: #718096;">Please select a class above to view enrolled students.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <!-- Account Details Modal -->
@@ -102,36 +164,6 @@
             <p style="margin-bottom: 16px;"><strong data-i18n="lbl_email">Email:</strong> <span id="modal-email">--</span></p>
         </div>
     </div>
-
-    <!-- Group Chat Floating Widget -->
-    <div id="chat-widget">
-        <button class="chat-fab" onclick="toggleChatWindow()">
-            💬
-            <span id="chat-unread-badge" class="hidden">0</span>
-        </button>
-    
-    <div id="chat-window" class="chat-box hidden">
-        <div class="chat-header">
-            <span data-i18n="chat_header">Team Group Chat</span>
-            <span style="cursor:pointer;" onclick="toggleChatWindow()">&times;</span>
-        </div>
-        
-        <div id="chat-messages" class="chat-messages"></div>
-
-        <!-- Emoji Picker Popup Container -->
-        <div id="emoji-picker" class="emoji-picker-container hidden">
-            <span>😀</span><span>😂</span><span>😍</span><span>👍</span><span>❤️</span>
-            <span>🔥</span><span>🎉</span><span>👏</span><span>🙏</span><span>✨</span>
-            <span>😊</span><span>😎</span><span>🙌</span><span>💯</span><span>🚀</span>
-        </div>
-
-        <!-- Chat Input Row -->
-        <div class="chat-input-row">
-            <button type="button" class="emoji-toggle-btn" onclick="toggleEmojiPicker()">😊</button>
-            <input type="text" id="chat-input" data-i18n-placeholder="chat_placeholder" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
-            <button type="button" class="primary-btn" data-i18n="btn_send" onclick="sendChatMessage()">Send</button>
-        </div>
-</div>
     
     <footer class="bottom-footer">
         <p id="live-footer-datetime">Loading date & time...</p>
