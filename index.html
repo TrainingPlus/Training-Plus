@@ -62,14 +62,100 @@
                 <h2 data-i18n="student_directory">Student Directory</h2>
                 <button class="primary-btn" data-i18n="add_new_cpr" onclick="showView('view-add-cpr')">+ Add New CPR</button>
             </div>
-            <!-- Student List cards will render dynamic Tamkeen dropdowns & class transfers -->
-            <div id="student-container" class="student-list"></div>
+            
+            <!-- Student Container List / Selected Student Details View -->
+            <div id="student-container" class="student-list">
+                <!-- Example Rendered Student Profile Card (Dynamic via script.js) -->
+                <div class="student-card-details" style="background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                    <!-- Top Actions Header (No Delete Button) -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 20px;">
+                        <button type="button" class="secondary-btn" onclick="downloadExcel()">Download Excel</button>
+                    </div>
+
+                    <!-- Student Details Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        
+                        <!-- Full Name -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Full Name:</label>
+                            <input type="text" id="student-fullname" placeholder="Full Name" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <!-- CPR Number -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">CPR:</label>
+                            <input type="text" id="student-cpr" maxlength="9" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background-color: #f8fafc;">
+                        </div>
+
+                        <!-- Gender -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Gender:</label>
+                            <select id="student-gender" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Email:</label>
+                            <input type="email" id="student-email" placeholder="Email" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                        <!-- Tamkeen Status Selector -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Tamkeen Status:</label>
+                            <select id="student-tamkeen-status" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff;">
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+
+                        <!-- Major -->
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Major:</label>
+                            <input type="text" id="student-major" placeholder="N/A" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                        </div>
+
+                    </div>
+
+                    <!-- Comment / Notes Section -->
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px; color: #334155;">Comments / Notes:</label>
+                        <textarea id="student-comment" rows="3" placeholder="Add comments about this student..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical;"></textarea>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <!-- Student CV Document Section -->
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="color: #2b6cb0; font-size: 1.1rem; margin-bottom: 12px;">Student CV Document</h3>
+                        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                            <input type="file" id="cv-upload-input">
+                            <button type="button" class="primary-btn" style="background-color: #6ee7b7; color: #065f46; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600;">Upload CV</button>
+                            <span style="color: #94a3b8; font-size: 0.9rem;">No CV uploaded</span>
+                        </div>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+                    <!-- Enrolled Courses Section -->
+                    <div>
+                        <h3 style="color: #2b6cb0; font-size: 1.1rem; margin-bottom: 12px;">Enrolled Courses</h3>
+                        <div style="display: flex; gap: 12px; max-width: 600px;">
+                            <input type="text" id="course-name-input" placeholder="Enter course name (e.g. Web Development)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+                            <button type="button" style="background-color: #6ee7b7; color: #065f46; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">+ Add Course</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- CPR Entry View -->
         <section id="view-add-cpr" class="card-view hidden">
             <h2 data-i18n="register_cpr">Register New CPR</h2>
-            <p class="subtitle" data-i18n="register_cpr_subtitle">Enter a 9-digit CPR number, select Tamkeen status, and add notes.</p>
+            <p class="subtitle" data-i18n="register_cpr_subtitle">Enter a 9-digit CPR number, select Tamkeen status, and add comments.</p>
             <form id="cpr-form" class="standard-form" onsubmit="addStudentCPR(); return false;">
                 
                 <!-- CPR Input -->
